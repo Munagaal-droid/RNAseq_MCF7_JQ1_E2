@@ -1,0 +1,43 @@
+R version 4.3.3 (2024-02-29)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 24.04.5 LTS
+
+Matrix products: default
+BLAS:   /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.12.0
+LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.12.0
+
+locale:
+ [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8
+ [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8
+ [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C
+[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C
+
+time zone: Etc/UTC
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base
+
+other attached packages:
+[1] ggplot2_4.0.3 edgeR_4.0.16  limma_3.58.1
+
+loaded via a namespace (and not attached):
+ [1] utf8_1.2.4              generics_0.1.4          bitops_1.1-0
+ [4] RSQLite_3.53.3          lattice_0.22-5          magrittr_2.0.3
+ [7] grid_4.3.3              RColorBrewer_1.1-3      fastmap_1.2.0
+[10] blob_1.3.0              AnnotationDbi_1.64.1    GenomeInfoDb_1.38.8
+[13] DBI_1.3.0               httr_1.4.9              fansi_1.0.5
+[16] scales_1.4.0            Biostrings_2.70.3       cli_3.6.2
+[19] rlang_1.3.0             crayon_1.5.3            XVector_0.42.0
+[22] Biobase_2.62.0          bit64_4.8.6             splines_4.3.3
+[25] withr_3.0.3             cachem_1.1.0            tools_4.3.3
+[28] memoise_2.0.1           dplyr_1.2.1             GenomeInfoDbData_1.2.11
+[31] locfit_1.5-9.8          BiocGenerics_0.48.1     curl_8.1.0
+[34] org.Hs.eg.db_3.18.0     vctrs_0.7.3             R6_2.5.1
+[37] png_0.1-9               stats4_4.3.3            lifecycle_1.0.5
+[40] zlibbioc_1.48.2         KEGGREST_1.42.0         S4Vectors_0.40.2
+[43] IRanges_2.36.0          bit_4.6.0               pkgconfig_2.0.3
+[46] pillar_1.9.0            gtable_0.3.6            glue_1.7.0
+[49] Rcpp_1.1.2              statmod_1.5.0           tibble_3.2.1
+[52] tidyselect_1.2.1        farver_2.1.1            labeling_0.4.3
+[55] compiler_4.3.3          S7_0.2.2                RCurl_1.98-1.20

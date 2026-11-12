@@ -1,366 +1,276 @@
-install.packages("BiocManager")
-
-library(BiocManager)
-
-BiocManager::install(c("edgeR", "DESeq2"))
-
-install("Biobase")
-
-library("edgeR")
-
-BiocManager::install("DESeq2")
-
-BiocManager::install("org.Mm.eg.db")
-
-BiocManager::install("gplots")
-
-BiocManager::install("Glimma")
-
-BiocManager::install("sva")
-
-install.packages(c("assertthat", "dplyr", "ggplot2"))
-
-library("RColorBrewer")
-
-library("edgeR")
-
-library("gplots")
-
-library("DESeq2")
-
-library("assertthat")
-
-library("dplyr")
-
-library("ggplot2")
-
-library("Glimma")
-
-library("org.Mm.eg.db")
-
-library("limma")
-
-#descriptive statistics of genes expression
-
-#boxplot of different experiments
-
-boxplot(JQ1E2Rep2_FPKM, JQ1E2Rep1_FPKM, JQ1vehRep2_FPKM, JQ1vehRep1_FPKM,
-        E2Rep2_FPKM, E2Rep1_FPKM, VehRep2_FPKM, VehRep1_FPKM)
-
-boxplot(Initial_data_R$MCF7_JQ1_E2_rep2, Initial_data_R$MCF7_JQ1_E2_rep1,
-        Initial_data_R$MCF7_JQ1_Veh_rep2, Initial_data_R$MCF7_JQ1_Veh_rep1,
-        Initial_data_R$MCF7_E2_rep2, Initial_data_R$MCF7_E2_rep1,
-        Initial_data_R$MCF7_Veh_rep2, Initial_data_R$MCF7_Veh_rep1,
-        main = "boxplots for raw data",
-        xlab = "number of experiment",
-        ylab = "expression levels")
-
-boxplot(Initial_data_R$MCF7_JQ1_E2_rep2_FPKM, Initial_data_R$MCF7_JQ1_E2_rep1_FPKM,
-        Initial_data_R$MCF7_JQ1_Veh_rep2_FPKM, Initial_data_R$MCF7_JQ1_Veh_rep1_FPKM,
-        Initial_data_R$MCF7_E2_rep2_FPKM, Initial_data_R$MCF7_E2_rep1_FPKM,
-        Initial_data_R$MCF7_Veh_rep2_FPKM, Initial_data_R$MCF7_Veh_rep1_FPKM,
-        main = "boxplots for FPKM",
-        xlab = "experiment number",
-        ylab = "expression levels")
-
-summary(Initial_data_R$MCF7_JQ1_E2_rep2_FPKM, Initial_data_R$MCF7_JQ1_E2_rep1_FPKM,
-        Initial_data_R$MCF7_JQ1_Veh_rep2_FPKM, Initial_data_R$MCF7_JQ1_Veh_rep1_FPKM,
-        Initial_data_R$MCF7_E2_rep2_FPKM, Initial_data_R$MCF7_E2_rep1_FPKM,
-        Initial_data_R$MCF7_Veh_rep2_FPKM, Initial_data_R$MCF7_Veh_rep1_FPKM)
-
-# histogram
-
-#PartB data normalization with EdgeR
-
-# creating dgelist
-
-Counts <- (Data_loading_RAW_R2)
-
-colnames(Counts) <- c("MCF7_JQ1_E2_rep2", "MCF7_JQ1_E2_rep1",
-                      "MCF7_JQ1_Veh_rep2", "MCF7_JQ1_Veh_rep1",
-                      "Control", "Control.1", "COntrol.2", "Control.3")
-
-dim(Counts)
-
-head(Counts)
-
-dgList <- DGEList(counts = Counts, genes = rownames(Counts))
-
-dgList
-
-dgList$samples
-
-head(dgList$counts)
-
-head(dgList$genes)
-
-# Filtering process
-
-countsPerMillion <- cpm(dgList) # cpm computes the counts per million
-
-summary(countsPerMillion)
-
-countCheck <- countsPerMillion > 1 # Check which genes > 1 cpm
-
-head(countCheck) # This produces a logical matrix with TRUEs and FALSEs
-
-table(rowSums(countCheck)) # we see How many genes have TRUEs in all the samples
-
-keep <- which(rowSums(countCheck) >= 2) # Keep genes with > 1 cpm in at least 2 samples
-
-dgList <- dgList[keep, ] # How many genes do we have left?
-
-summary(cpm(dgList)) # Compare this to the original summary
-
-head(dgList$counts)
-
-countsPerMillion <- cpm(dgList) # Calculate cpm for the filtered dgList
-
-#use the first sample
-
-plot(countsPerMillion[, 1], dgList$counts[, 1], ylim = c(0, 50), xlim = c(0, 2))
-
-# Add lines for 5 and 10 read counts
-
-abline(v = 0.67, h = 10, col = "red")
-
-abline(v = 1.34, h = 20, col = "blue")
-
-# TMM normalisation
-
-# How does the function work?
-
-?calcNormFactors
-
-# Check the "norm.factors" column
-
-dgList$samples
-
-# Apply TMM normalisation to the DGEList object
-
-dgList <- calcNormFactors(dgList, method = "TMM") ## Normalisation for composition bias
-
-#Quality control, library size and distribution plots
-
-dgList$samples$lib.size #First, we can check how many reads we have for each sample in the dglist
-
-#We can also plot the library sizes as a barplot to see whether there are any major discrepancies between the samples more easily.
-
-barplot(dgList$samples$lib.size, names = colnames(dgList), las = 2)
-
-title("Barplot of library sizes")
-
-# the plot does not look good need to fix naming
-
-#creating boxplot
-
-logcounts <- cpm(dgList, log = TRUE)
-
-boxplot(logcounts, xlab = "", ylab = "Log2 counts per million", las = 2)
-
-abline(h = median(logcounts), col = "blue")
-
-title("Boxplots of logCPMs (normalised)")
-
-# Multidimensional scaling plots
-
-plotMDS(logcounts)
-
-#Hierarchical clustering with heatmaps
-
-# We estimate the variance for each row in the logcounts matrix
-
-var_genes <- apply(logcounts, 1, var)
-
-head(var_genes)
-
-# Get the gene names for the top 500 most variable genes
-
-select_var <- names(sort(var_genes, decreasing = TRUE))[1:500]
-
-head(select_var)
-
-# Subset logcounts matrix
-
-highly_variable_lcpm <- logcounts[select_var, ]
-
-dim(highly_variable_lcpm)
-
-head(highly_variable_lcpm)
-
-## creating heatmap
-
-?heatmap.2
-
-x <- highly_variable_lcpm
-
-y <- data.matrix(x)
-
-heatmap(as.matrix(highly_variable_lcpm),
-        main = "Top 500 most variable genes across samples")
-
-##Batch effect correction with sva
-
-# Take the log of the data
-
-logBulkTPM <- log2(Counts + 1)
-
-# Find the highest and lowest expression per row
-
-maxTPM <- apply(logBulkTPM, 1, max)
-
-minTPM <- apply(logBulkTPM, 1, min)
-
-# Filter out genes according to our criteria
-
-logBulkTPM <- logBulkTPM[(maxTPM >= 2) & ((maxTPM - minTPM) >= 2), ]
-
-# Select the top 500 genes by variance
-
-numTopGenes <- 500
-
-idxOfTop <- order(apply(logBulkTPM, 1, var), decreasing = TRUE)[1:numTopGenes]
-
-logBulkTPM <- logBulkTPM[idxOfTop, ]
-
-# different method for PCA analysis
-
-data <- Counts[, c(1:8)]
-
-pc <- princomp(data, cor = TRUE, scores = TRUE)
-
-pc
-
-plot(pc, type = "l") ### elbow curve
-
-biplot(pc)
-
-### estimate dispersions :biological coefficient of variation (BCV)
-
-# Common dispersion
-
-## differential gene expression analysis
-
-# We can use the column names of the DGEList object to extract the sample data
-
-## before creating the the matrix create table with names control and tested
-
-colnames(dgList)
-
-sampleType <- rep("Control", ncol(dgList))
-
-sampleType[grep("JQ1", colnames(dgList))] <- "JQ1"
-
-# Finally, we can build the design matrix
-
-designMat <- model.matrix(~sampleType)
-
-View(designMat)
-
-# Common dispersion
-
-dgList <- estimateGLMCommonDisp(dgList, design = designMat)
-
-plotBCV(dgList)
-
-# Trended dispersion
-
-dgList <- estimateGLMTrendedDisp(dgList, design = designMat)
-
-plotBCV(dgList)
-
-# Tagwise dispersion
-
-dgList <- estimateGLMTagwiseDisp(dgList, design = designMat)
-
-plotBCV(dgList)
-
-### p-value(Colm)
-
-apply(highly_variable_lcpm, 1, function(x) {
-  t.test(x[1:4], x[5:8])$p.value
+#!/usr/bin/env Rscript
+
+user_library <- Sys.getenv(
+  "R_LIBS_USER",
+  unset = file.path(Sys.getenv("HOME"), ".local", "R", "library")
+)
+if (dir.exists(user_library)) {
+  .libPaths(c(user_library, .libPaths()))
+}
+
+suppressPackageStartupMessages({
+  library(edgeR)
+  library(ggplot2)
 })
 
-### the genes according to the p-value and choose most higly significant
+root_dir <- normalizePath(".", mustWork = TRUE)
+data_dir <- file.path(root_dir, "data")
+results_dir <- file.path(root_dir, "results")
+plot_dir <- file.path(results_dir, "plots")
+dir.create(plot_dir, recursive = TRUE, showWarnings = FALSE)
 
-## find the gene that is most significan and use it for biological anlysis
+counts_path <- file.path(data_dir, "gene_counts.csv")
+metadata_path <- file.path(data_dir, "sample_metadata.csv")
 
-### gene enrichment anlysis with clusterprofiler
+if (!file.exists(counts_path)) {
+  stop(
+    "Missing data/gene_counts.csv. Run Rscript scripts/prepare_counts.R first.",
+    call. = FALSE
+  )
+}
 
-table(highly_variable_lcpm)
+metadata <- read.csv(metadata_path, stringsAsFactors = FALSE, check.names = FALSE)
+count_data <- read.csv(counts_path, stringsAsFactors = FALSE, check.names = FALSE)
+gene_ids <- count_data$gene_id
+counts <- as.matrix(count_data[, setdiff(names(count_data), "gene_id"), drop = FALSE])
+rownames(counts) <- gene_ids
+storage.mode(counts) <- "numeric"
 
-# Fit the GLM
+if (anyDuplicated(rownames(counts))) {
+  stop("Gene identifiers in data/gene_counts.csv must be unique.", call. = FALSE)
+}
+if (!setequal(colnames(counts), metadata$sample_id)) {
+  stop("Count-matrix columns do not match sample_metadata.csv.", call. = FALSE)
+}
+counts <- counts[, metadata$sample_id, drop = FALSE]
+if (anyNA(counts) || any(!is.finite(counts)) || any(counts < 0)) {
+  stop("The gene-count matrix contains missing or invalid values.", call. = FALSE)
+}
 
-fit <- glmFit(dgList, designMat)
+metadata$treatment <- factor(metadata$treatment, levels = c("Control", "JQ1"))
+metadata$estradiol <- factor(metadata$estradiol, levels = c("Veh", "E2"))
+design <- model.matrix(~ estradiol + treatment, data = metadata)
+if (qr(design)$rank != ncol(design)) {
+  stop("The treatment design matrix is not full rank.", call. = FALSE)
+}
 
-# Determine which coefficient to select from the design matrix
+write.csv(metadata, file.path(results_dir, "sample_metadata.csv"), row.names = FALSE)
+write.csv(
+  data.frame(
+    gene_id = rownames(counts),
+    mean_scaled_count = rowMeans(counts),
+    median_scaled_count = apply(counts, 1, median),
+    stringsAsFactors = FALSE
+  ),
+  file.path(results_dir, "count_summary.csv"),
+  row.names = FALSE
+)
 
-View(designMat)
+dge <- DGEList(counts = counts, genes = data.frame(gene_id = rownames(counts)))
+counts_per_million <- cpm(dge)
+keep <- rowSums(counts_per_million > 1) >= 2
+if (!any(keep)) {
+  stop("No genes passed the CPM > 1 in at least two samples filter.", call. = FALSE)
+}
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+dge <- calcNormFactors(dge, method = "TMM")
+log_cpm <- cpm(dge, log = TRUE, prior.count = 2)
 
-# Calculate likelihood ratio tests
+png(file.path(plot_dir, "scaled_count_boxplots.png"), width = 1400, height = 900, res = 140)
+boxplot(log2(counts + 1), las = 2, ylab = "Log2 scaled counts + 1",
+        main = "Recount3 gene counts by sample")
+dev.off()
 
-lrt <- glmLRT(fit, coef = 2)
+png(file.path(plot_dir, "library_sizes.png"), width = 1400, height = 900, res = 140)
+barplot(dge$samples$lib.size, names.arg = colnames(dge), las = 2,
+        ylab = "Estimated library size", main = "Library sizes")
+dev.off()
 
-# Table the result of the DGE analysis
+png(file.path(plot_dir, "log_cpm_boxplots.png"), width = 1400, height = 900, res = 140)
+boxplot(log_cpm, las = 2, ylab = "Log2 counts per million",
+        main = "TMM-normalized log-CPM")
+abline(h = median(log_cpm), col = "blue")
+dev.off()
 
-edgeR_result <- topTags(lrt, n = Inf, adjust.method = "BH", sort.by = "PValue")$table
+png(file.path(plot_dir, "mds.png"), width = 1200, height = 900, res = 140)
+plotMDS(dge, labels = colnames(dge), col = as.integer(metadata$treatment),
+        main = "MDS of TMM-normalized samples")
+legend("topright", legend = levels(metadata$treatment),
+       col = seq_along(levels(metadata$treatment)), pch = 16)
+dev.off()
 
-View(edgeR_result)
+gene_variances <- apply(log_cpm, 1, var)
+top_genes <- names(sort(gene_variances, decreasing = TRUE))[
+  seq_len(min(500L, length(gene_variances)))
+]
+write.csv(
+  data.frame(gene_id = top_genes, variance = gene_variances[top_genes]),
+  file.path(results_dir, "top_variable_genes.csv"),
+  row.names = FALSE
+)
 
-# Filter out non-DEGs according to a threshold of adjusted P < 0.05
+png(file.path(plot_dir, "top_variable_genes_heatmap.png"),
+    width = 1400, height = 1400, res = 140)
+heatmap(log_cpm[top_genes, , drop = FALSE],
+        main = sprintf("Top %d most variable genes", length(top_genes)),
+        scale = "row")
+dev.off()
 
-degs <- edgeR_result[edgeR_result$FDR < 0.05, ]
+pca <- prcomp(t(log_cpm), scale. = TRUE)
+pca_data <- data.frame(
+  sample_id = rownames(pca$x),
+  PC1 = pca$x[, 1],
+  PC2 = pca$x[, 2],
+  treatment = metadata$treatment,
+  estradiol = metadata$estradiol
+)
+write.csv(pca_data, file.path(results_dir, "pca_scores.csv"), row.names = FALSE)
+pca_plot <- ggplot(pca_data, aes(PC1, PC2, color = treatment, shape = estradiol,
+                                 label = sample_id)) +
+  geom_point(size = 3) +
+  geom_text(vjust = -0.8, size = 3, show.legend = FALSE) +
+  theme_bw() +
+  labs(title = "PCA of TMM-normalized log-CPM")
+ggsave(file.path(plot_dir, "pca.png"), pca_plot, width = 9, height = 7, dpi = 150)
 
-# Extract up- and down-regulated DEGs using the fold change
+dge <- estimateDisp(dge, design, robust = TRUE)
+png(file.path(plot_dir, "biological_coefficient_of_variation.png"),
+    width = 1200, height = 900, res = 140)
+plotBCV(dge, main = "Biological coefficient of variation")
+dev.off()
 
-upreg_degs <- degs[degs$logFC > 0, ]
+fit <- glmFit(dge, design)
+treatment_coefficient <- match("treatmentJQ1", colnames(design))
+if (is.na(treatment_coefficient)) {
+  stop("Could not identify the JQ1 coefficient in the design matrix.", call. = FALSE)
+}
+lrt <- glmLRT(fit, coef = treatment_coefficient)
+edgeR_result <- topTags(
+  lrt, n = Inf, adjust.method = "BH", sort.by = "PValue"
+)$table
+edgeR_result$gene_id <- rownames(edgeR_result)
 
-downreg_degs <- degs[degs$logFC < 0, ]
+ensembl_ids <- sub("\\.[0-9]+$", "", edgeR_result$gene_id)
+gene_symbols <- AnnotationDbi::mapIds(
+  org.Hs.eg.db::org.Hs.eg.db,
+  keys = unique(ensembl_ids),
+  column = "SYMBOL",
+  keytype = "ENSEMBL",
+  multiVals = "first"
+)
+entrez_ids <- AnnotationDbi::mapIds(
+  org.Hs.eg.db::org.Hs.eg.db,
+  keys = unique(ensembl_ids),
+  column = "ENTREZID",
+  keytype = "ENSEMBL",
+  multiVals = "first"
+)
+edgeR_result$gene_name <- unname(gene_symbols[ensembl_ids])
+edgeR_result$entrez_id <- unname(entrez_ids[ensembl_ids])
+edgeR_result <- edgeR_result[
+  , c("gene_id", "gene_name", "entrez_id",
+      setdiff(names(edgeR_result), c("gene_id", "gene_name", "entrez_id"))),
+  drop = FALSE
+]
+write.csv(edgeR_result, file.path(results_dir, "edgeR_results.csv"), row.names = FALSE)
 
-# Store the DEG information
+degs <- edgeR_result[!is.na(edgeR_result$FDR) & edgeR_result$FDR < 0.05, , drop = FALSE]
+upregulated <- degs[degs$logFC > 0, , drop = FALSE]
+downregulated <- degs[degs$logFC < 0, , drop = FALSE]
+write.csv(upregulated, file.path(results_dir, "upregulated_genes.csv"), row.names = FALSE)
+write.csv(downregulated, file.path(results_dir, "downregulated_genes.csv"), row.names = FALSE)
 
-write.csv(upreg_degs, file = "./upregulated_genes.csv",
-          row.names = FALSE, quote = FALSE)
-
-write.csv(downreg_degs, file = "./downregulated_genes.csv",
-          row.names = FALSE, quote = FALSE)
-
-# Obtain a list of DEG names
-
-deGenes <- decideTestsDGE(lrt, p = 0.05)
-
-deGenes <- rownames(lrt)[as.logical(deGenes)]
-
-# Display a smear plot and add lines for 1 and -1 logFCs
-
-plotSmear(lrt, de.tags = deGenes)
-
+de_gene_ids <- rownames(lrt)[as.logical(decideTestsDGE(lrt, p = 0.05))]
+png(file.path(plot_dir, "smear_plot.png"), width = 1200, height = 900, res = 140)
+plotSmear(lrt, de.tags = de_gene_ids, main = "JQ1 versus control")
 abline(h = c(-1, 1), col = "blue")
+dev.off()
 
-# Install and load the required package
+if (nrow(degs) > 0L) {
+  tested_entrez <- unique(na.omit(edgeR_result$entrez_id))
+  deg_entrez <- unique(na.omit(degs$entrez_id))
+  if (length(deg_entrez) == 0L) {
+    stop("No significant genes mapped to human Entrez IDs for KEGG.", call. = FALSE)
+  }
+  kegg_links <- KEGGREST::keggLink("pathway", "hsa")
+  kegg_pathways <- KEGGREST::keggList("pathway", "hsa")
+  gene_pathways <- data.frame(
+    entrez_id = sub("^hsa:", "", names(kegg_links)),
+    pathway_id = sub("^path:", "", unname(kegg_links)),
+    stringsAsFactors = FALSE
+  )
+  tested_entrez <- intersect(tested_entrez, gene_pathways$entrez_id)
+  deg_entrez <- intersect(deg_entrez, tested_entrez)
+  if (length(deg_entrez) == 0L) {
+    stop("Significant genes did not map to KEGG pathways.", call. = FALSE)
+  }
+  pathway_genes <- split(gene_pathways$entrez_id, gene_pathways$pathway_id)
+  tested_gene_count <- length(tested_entrez)
+  deg_gene_count <- length(deg_entrez)
+  pathway_rows <- lapply(names(pathway_genes), function(pathway_id) {
+    members <- intersect(unique(pathway_genes[[pathway_id]]), tested_entrez)
+    if (length(members) == 0L) {
+      return(NULL)
+    }
+    overlap <- intersect(deg_entrez, members)
+    data.frame(
+      ID = pathway_id,
+      Description = unname(kegg_pathways[paste0("path:", pathway_id)]),
+      GeneRatio = sprintf("%d/%d", length(overlap), deg_gene_count),
+      BgRatio = sprintf("%d/%d", length(members), tested_gene_count),
+      pvalue = phyper(
+        length(overlap) - 1L,
+        length(members),
+        tested_gene_count - length(members),
+        deg_gene_count,
+        lower.tail = FALSE
+      ),
+      geneID = paste(overlap, collapse = "/"),
+      Count = length(overlap),
+      stringsAsFactors = FALSE
+    )
+  })
+  pathway_results <- do.call(rbind, pathway_rows)
+  if (is.null(pathway_results) || nrow(pathway_results) == 0L) {
+    stop("No KEGG pathways overlapped the significant genes.", call. = FALSE)
+  }
+  pathway_results$p.adjust <- p.adjust(pathway_results$pvalue, method = "BH")
+  pathway_results <- pathway_results[order(pathway_results$p.adjust), ]
+  significant_pathways <- pathway_results[
+    !is.na(pathway_results$p.adjust) & pathway_results$p.adjust < 0.05, ,
+    drop = FALSE
+  ]
+  write.csv(pathway_results, file.path(results_dir, "kegg_enrichment.csv"),
+            row.names = FALSE)
+  write.csv(significant_pathways, file.path(results_dir, "significant_pathways.csv"),
+            row.names = FALSE)
+  if (nrow(significant_pathways) > 0L) {
+    plot_data <- head(significant_pathways, 10L)
+    pathway_plot <- ggplot(
+      plot_data,
+      aes(x = Count, y = reorder(Description, Count), color = -log10(p.adjust),
+          size = Count)
+    ) +
+      geom_point() +
+      theme_bw() +
+      labs(x = "Gene count", y = NULL, color = "-log10 adjusted p-value",
+           title = "KEGG pathway enrichment")
+    ggsave(file.path(plot_dir, "kegg_pathways.png"), pathway_plot,
+           width = 10, height = 7, dpi = 150)
+  }
+} else {
+  write.csv(data.frame(), file.path(results_dir, "kegg_enrichment.csv"),
+            row.names = FALSE)
+  write.csv(data.frame(), file.path(results_dir, "significant_pathways.csv"),
+            row.names = FALSE)
+  message("No genes met the FDR < 0.05 threshold; KEGG enrichment was skipped.")
+}
 
-BiocManager::install("clusterProfiler")
-
-library(clusterProfiler)
-
-# KEGG pathway enrichment for top 1000 DEGs
-
-pathEnrich <- enrichKEGG(gene = degs$genes[1:1000],
-                         organism = "hsa", # Homo sapiens
-                         keyType = "kegg", # KEGG database
-                         pvalueCutoff = 0.05,
-                         pAdjustMethod = "BH",
-                         universe = edgeR_result$genes) # Background genes
-
-View(pathEnrich@result)
-
-# Store the significantly enriched pathways (P < 0.05)
-
-signif_pathEnrich <- pathEnrich@result[pathEnrich@result$p.adjust < 0.05, ]
-
-write.csv(signif_pathEnrich, file = "./signif_pathEnrich.csv",
-          row.names = FALSE, quote = FALSE)
-
-# Show the 10 most significant pathways as a dot plot
-
-dotplot(pathEnrich, x = "Count", showCategory = 10, orderBy = "Count")
+session_info <- sub("[[:space:]]+$", "", capture.output(sessionInfo()))
+writeLines(session_info, file.path(results_dir, "sessionInfo.txt"))
+message(
+  sprintf(
+    "Analysis complete: %d genes tested; %d DEGs at FDR < 0.05.",
+    nrow(edgeR_result), nrow(degs)
+  )
+)
